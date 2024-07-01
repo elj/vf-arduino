@@ -42,6 +42,7 @@ const long interval = 2600;
 void setup() {
   // initialize serial communications at 9600 bps:
   Serial.begin(115200);
+  Wire.begin();
   while (!Serial) delay(10);  // Wait for console to open
 
   Serial.println("Adafruit ADS7830 initializing - by Limor Fried/Ladyada");
@@ -67,7 +68,7 @@ void setup() {
 void loop() {
   switch (VENDING_STATE) {
     case 0:
-      // read the analog value for the columns
+      // read the analog value for the columns to see if anything is vending
       columns[0] = ad7830A.readADCsingle(aPin3);
       columns[1] = ad7830A.readADCsingle(aPin4);
       columns[2] = ad7830A.readADCsingle(aPin5);
@@ -107,6 +108,9 @@ void loop() {
       if (currentMillis - vendingTime >= interval) {
         Serial.println("Vending time over!");
         VENDING_STATE = 0;
+        Wire.beginTransmission(8);
+        Wire.write('d');
+        Wire.endTransmission();
       } else {
         delay(50);
       }
@@ -189,9 +193,13 @@ int drawerTest() {
 }
 
 void confirmVending(int c, int d) {
+  char drawers[] = {'a', 'b', 'c'};
   Serial.print("Vending! ");
   vendingTime = millis();
   VENDING_STATE = 1;
+  Wire.beginTransmission(8);
+  Wire.write(drawers[d]);
+  Wire.endTransmission();
   switch (d) {
     case 0:
       Serial.print("A-");
